@@ -21,5 +21,4 @@ jobs:
         ./rcc configure credentials --account f7f3450c-c653-459a-b352-0cc50cfdaee0 --workspace 050a13d3-6877-4559-ada0-b06b4007efbf --apikey LrgKL31cd1xpBi8Jx9WwcC3jkPY1iNLGeDI8qmOIC3m3aFkgoqjwuSEPFavTfvj8h0ElNLsnnucWCtiRfcD022ZvQ3w29gdphDA663xlEwnKaynwHU63ObusbK51R3
     - name: Push and run robot in Robocorp Control Room
       run: |
-        ./rcc cloud push --directory ./
-        ./rcc cloud run --workspace 050a13d3-6877-4559-ada0-b06b4007efbf --robot fresh-news
+        ./rcc cloud run --workspace 050a13d3-6877-4559-ada0-b06b4007efbf --robot fresh-news --directory ./
