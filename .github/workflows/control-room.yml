@@ -29,7 +29,11 @@ jobs:
         id: check_process
         run: |
           # Check if the process exists using rcc command
-          if rcc cloud workspace | grep -q 'Placide_Ebongue'; then
+          # Try to create the Robocloud process using rcc command
+          # If it fails due to the robot already existing, capture the error message
+          ROBOT_CREATION_OUTPUT=$(rcc cloud new -r Placide_Ebongue -w ${{ secrets.ROBOCORP_WORKSPACE_ID }} --json 2>&1)
+          if [[ $ROBOT_CREATION_OUTPUT == *"ROBOT_WITH_SAME_NAME_ALREADY_EXISTS"* ]]; then
+            echo "Robot with the same name already exists."
             echo "name=exists::true" >> $GITHUB_OUTPUT
           else
             echo "name=exists::false" >> $GITHUB_OUTPUT
@@ -39,8 +43,7 @@ jobs:
         id: create_robot
         if: steps.check_process.outputs.exists != 'true'
         run: |
-          # Create the Robocloud process using rcc command
-          ROBOT_CREATION_OUTPUT=$(rcc cloud new -r Placide_Ebongue -w ${{ secrets.ROBOCORP_WORKSPACE_ID }} --json)
+          # Extract the robot ID from the output JSON
           ROBOT_ID=$(echo "$ROBOT_CREATION_OUTPUT" | jq -r '.identity')
           echo "name=robot_id::$ROBOT_ID" >> $GITHUB_OUTPUT
         continue-on-error: true
@@ -49,14 +52,22 @@ jobs:
         env:
           ROBOCLOUD_API_KEY: ${{ secrets.ROBOCORP_API_KEY }}
         run: |
-          # Trigger the Robocloud process using rcc command
-          rcc cloud push -d . -r ${{ steps.create_robot.outputs.robot_id }} -w ${{ secrets.ROBOCORP_WORKSPACE_ID }}
-          # Capture the exit code of the previous command
-          EXIT_CODE=$?
-          # Provide feedback based on the exit code
-          if [ $EXIT_CODE -eq 0 ]; then
-            echo "Robocloud process completed successfully."
+          # Only proceed if the robot was created or if it already existed
+          if grep -q "name=robot_id" $GITHUB_OUTPUT || grep -q "name=exists::true" $GITHUB_OUTPUT; then
+            # Extract the robot ID from the output JSON
+            ROBOT_ID=${{ secrets.ROBOCORP_ROBOT_ID }}
+            # Push the robot to Robocorp Control Room using the retrieved robot ID
+            rcc cloud push -d . -r $ROBOT_ID -w ${{ secrets.ROBOCORP_WORKSPACE_ID }}
+            # Capture the exit code of the previous command
+            EXIT_CODE=$?
+            # Provide feedback based on the exit code
+            if [ $EXIT_CODE -eq 0 ]; then
+              echo "Robocloud process completed successfully."
+            else
+              echo "Robocloud process failed with exit code $EXIT_CODE."
+              exit $EXIT_CODE
+            fi
           else
-            echo "Robocloud process failed with exit code $EXIT_CODE."
-            exit $EXIT_CODE
+            echo "Failed to create or find the robot. Exiting..."
+            exit 1
           fi
