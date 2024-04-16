@@ -22,6 +22,7 @@ jobs:
         run: |
           curl -o rcc https://downloads.robocorp.com/rcc/releases/latest/linux64/rcc
           chmod +x rcc
+          sudo mv rcc /usr/local/bin/rcc
           ./rcc configure credentials ${{ secrets.ROBOCORP_ACCESS_CREDENTIALS }} --account ${{ secrets.ROBOCORP_ACCOUNT_ID }}
 
       - name: Check if Robocloud Process Exists
@@ -29,9 +30,9 @@ jobs:
         run: |
           # Check if the process exists using rcc command
           if rcc process list | grep -q 'Placide_Ebongue'; then
-            echo "::set-output name=exists::true"
+            echo "name=exists::true" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=exists::false"
+            echo "name=exists::false" >> $GITHUB_OUTPUT
           fi
 
       - name: Create Robocloud Process if Not Exist
