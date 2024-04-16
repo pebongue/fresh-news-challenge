@@ -1,4 +1,4 @@
-name: Deploy to Robocorp Control Room
+name: Run Robocloud Fresh-News Process
 
 on:
   push:
@@ -6,19 +6,52 @@ on:
       - master
 
 jobs:
-  deploy:
+  run_process:
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.10.12'
-    - name: Install RCC
-      run: |
-        curl -o rcc https://downloads.robocorp.com/rcc/releases/latest/linux64/rcc
-        chmod +x rcc
-        ./rcc configure credentials --account f7f3450c-c653-459a-b352-0cc50cfdaee0 --workspace 050a13d3-6877-4559-ada0-b06b4007efbf --apikey LrgKL31cd1xpBi8Jx9WwcC3jkPY1iNLGeDI8qmOIC3m3aFkgoqjwuSEPFavTfvj8h0ElNLsnnucWCtiRfcD022ZvQ3w29gdphDA663xlEwnKaynwHU63ObusbK51R3
-    - name: Push and run robot in Robocorp Control Room
-      run: |
-        ./rcc cloud run --workspace 050a13d3-6877-4559-ada0-b06b4007efbf --robot fresh-news --directory ./
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10.12'
+
+      - name: Install RCC
+        run: |
+          curl -o rcc https://downloads.robocorp.com/rcc/releases/latest/linux64/rcc
+          chmod +x rcc
+          ./rcc configure credentials --account ${{ secrets.ROBOCORP_ACCOUNT_ID }} --apikey ${{ secrets.ROBOCORP_API_KEY }}
+
+      - name: Check if Robocloud Process Exists
+        id: check_process
+        run: |
+          # Check if the process exists using rcc command
+          if rcc process list | grep -q 'Placide_Ebongue'; then
+            echo "::set-output name=exists::true"
+          else
+            echo "::set-output name=exists::false"
+          fi
+
+      - name: Create Robocloud Process if Not Exist
+        if: steps.check_process.outputs.exists != 'true'
+        run: |
+          # Create the Robocloud process using rcc command
+          rcc process create Placide_Ebongue
+
+      - name: Run Robocloud Process
+        env:
+          ROBOCLOUD_API_KEY: ${{ secrets.ROBOCORP_API_KEY }}
+        run: |
+          # Trigger the Robocloud process using rcc command
+          rcc run --process Placide_Ebongue
+          # Capture the exit code of the previous command
+          EXIT_CODE=$?
+          # Provide feedback based on the exit code
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "Robocloud process completed successfully."
+          else
+            echo "Robocloud process failed with exit code $EXIT_CODE."
+            exit $EXIT_CODE
+          fi
