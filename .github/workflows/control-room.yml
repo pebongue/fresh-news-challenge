@@ -36,17 +36,21 @@ jobs:
           fi
 
       - name: Create Robocloud Process if Not Exist
+        id: create_robot
         if: steps.check_process.outputs.exists != 'true'
         run: |
           # Create the Robocloud process using rcc command
-          rcc cloud new -r Placide_Ebongue -w ${{ secrets.ROBOCORP_WORKSPACE_ID }}
+          ROBOT_CREATION_OUTPUT=$(rcc cloud new -r Placide_Ebongue -w ${{ secrets.ROBOCORP_WORKSPACE_ID }} --output-format json)
+          ROBOT_ID=$(echo "$ROBOT_CREATION_OUTPUT" | jq -r '.identity')
+          echo "name=robot_id::$ROBOT_ID" >> $GITHUB_OUTPUT
+        continue-on-error: true
 
       - name: Run Robocloud Process
         env:
           ROBOCLOUD_API_KEY: ${{ secrets.ROBOCORP_API_KEY }}
         run: |
           # Trigger the Robocloud process using rcc command
-          rcc cloud push -r Placide_Ebongue -w ${{ secrets.ROBOCORP_WORKSPACE_ID }}
+          rcc cloud push -r ${{ steps.create_robot.outputs.robot_id }} -w ${{ secrets.ROBOCORP_WORKSPACE_ID }}
           # Capture the exit code of the previous command
           EXIT_CODE=$?
           # Provide feedback based on the exit code
