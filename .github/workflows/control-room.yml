@@ -22,7 +22,7 @@ jobs:
         run: |
           curl -o rcc https://downloads.robocorp.com/rcc/releases/latest/linux64/rcc
           chmod +x rcc
-          sudo mv rcc /usr/local/bin/rcc
+          sudo mv rcc /usr/local/bin/
           ./rcc configure credentials ${{ secrets.ROBOCORP_ACCESS_CREDENTIALS }} --account ${{ secrets.ROBOCORP_ACCOUNT_ID }}
 
       - name: Check if Robocloud Process Exists
