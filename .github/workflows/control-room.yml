@@ -39,14 +39,14 @@ jobs:
         if: steps.check_process.outputs.exists != 'true'
         run: |
           # Create the Robocloud process using rcc command
-          rcc cloud new -r Placide_Ebongue -w {{ secrets.ROBOCORP_WORKSPACE_ID }}
+          rcc cloud new -r Placide_Ebongue -w ${{ secrets.ROBOCORP_WORKSPACE_ID }}
 
       - name: Run Robocloud Process
         env:
           ROBOCLOUD_API_KEY: ${{ secrets.ROBOCORP_API_KEY }}
         run: |
           # Trigger the Robocloud process using rcc command
-          rcc cloud push -r Placide_Ebongue -w {{ secrets.ROBOCORP_WORKSPACE_ID }}
+          rcc cloud push -r Placide_Ebongue -w ${{ secrets.ROBOCORP_WORKSPACE_ID }}
           # Capture the exit code of the previous command
           EXIT_CODE=$?
           # Provide feedback based on the exit code
