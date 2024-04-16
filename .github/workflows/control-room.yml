@@ -29,7 +29,7 @@ jobs:
         id: check_process
         run: |
           # Check if the process exists using rcc command
-          if rcc process list | grep -q 'Placide_Ebongue'; then
+          if rcc cloud workspace | grep -q 'Placide_Ebongue'; then
             echo "name=exists::true" >> $GITHUB_OUTPUT
           else
             echo "name=exists::false" >> $GITHUB_OUTPUT
@@ -39,14 +39,14 @@ jobs:
         if: steps.check_process.outputs.exists != 'true'
         run: |
           # Create the Robocloud process using rcc command
-          rcc process create Placide_Ebongue
+          rcc cloud new -r Placide_Ebongue -w {{ secrets.ROBOCORP_WORKSPACE_ID }}
 
       - name: Run Robocloud Process
         env:
           ROBOCLOUD_API_KEY: ${{ secrets.ROBOCORP_API_KEY }}
         run: |
           # Trigger the Robocloud process using rcc command
-          rcc run --process Placide_Ebongue
+          rcc cloud push -r Placide_Ebongue -w {{ secrets.ROBOCORP_WORKSPACE_ID }}
           # Capture the exit code of the previous command
           EXIT_CODE=$?
           # Provide feedback based on the exit code
