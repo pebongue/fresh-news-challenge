@@ -5,6 +5,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from RPA.Browser.Selenium import Selenium
 import pandas as pd
 import logging
 import os
@@ -29,7 +30,7 @@ class NewsData:
 
 class NewsScraper:
     def __init__(self, base_url, search_phrase):
-        self.driver = webdriver.Chrome()
+        self.browser = Selenium()
         self.base_url = base_url
         self.search_phrase = search_phrase
         self.news_data = []
@@ -38,7 +39,7 @@ class NewsScraper:
     @retry(stop_max_attempt_number=3, wait_fixed=2000)
     def navigate_to_site(self):
         try:
-            self.driver.get(self.base_url)
+            self.browser.open_available_browser(self.base_url)
         except Exception as e:
             self.logger.error(f"Error navigating to site: {e}")
             raise
@@ -46,7 +47,7 @@ class NewsScraper:
     @retry(stop_max_attempt_number=3, wait_fixed=2000)
     def enter_search_phrase(self):
         try:
-            search_field = self.driver.find_element(By.NAME, "q")
+            search_field = self.browser.find_element(By.NAME, "q")
             search_field.send_keys(self.search_phrase)
             search_field.send_keys(Keys.RETURN)
         except Exception as e:
@@ -56,7 +57,7 @@ class NewsScraper:
     @retry(stop_max_attempt_number=3, wait_fixed=2000)
     def select_news_category(self):
         try:
-            WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.LINK_TEXT, "News"))).click()
+            self.browser.click_link("News")
         except Exception as e:
             self.logger.error(f"Error selecting news category: {e}")
             raise
@@ -64,7 +65,7 @@ class NewsScraper:
     @retry(stop_max_attempt_number=3, wait_fixed=2000)
     def choose_latest_news(self):
         try:
-            WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.LINK_TEXT, "Latest"))).click()
+            self.browser.click_link("Latest")
         except Exception as e:
             self.logger.error(f"Error choosing latest news: {e}")
             raise
@@ -76,12 +77,13 @@ class NewsScraper:
     @retry(stop_max_attempt_number=3, wait_fixed=2000)
     def extract_news_data(self):
         try:
-            news_elements = WebDriverWait(self.driver, 10).until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div.NewsArticle__content")))
+            self.browser.wait_until_element_is_visible("css:div.NewsArticle__content")
+            news_elements = self.browser.find_elements("css:div.NewsArticle__content")
             for news in news_elements:
-                title = news.find_element(By.CSS_SELECTOR, "h4").text
-                date = news.find_element(By.CSS_SELECTOR, "time").get_attribute("datetime")
-                description = news.find_element(By.CSS_SELECTOR, "p").text
-                picture_url = news.find_element(By.CSS_SELECTOR, "img").get_attribute("src")
+                title = self.browser.find_element("css:h4", parent=news).text
+                date = self.browser.find_element("css:time", parent=news).get_attribute("datetime")
+                description = self.browser.find_element("css:p", parent=news).text
+                picture_url = self.browser.find_element("css:img", parent=news).get_attribute("src")
                 self.validate_data(title, date, description, picture_url)
                 self.news_data.append(NewsData(title, date, description, picture_url))
         except Exception as e:
@@ -108,6 +110,10 @@ class NewsScraper:
             self.logger.error(f"Error downloading news picture: {e}")
             raise
 
+    def download_all_news_pictures(self):
+        for nd in self.news_data:
+            self.download_news_picture(nd)
+
     def run(self):
         try:
             self.navigate_to_site()
@@ -116,8 +122,7 @@ class NewsScraper:
             self.choose_latest_news()
             self.extract_news_data()
             self.store_data_in_excel()
-            for nd in self.news_data:
-                self.download_news_picture(nd)
+            self.download_all_news_pictures()
         except Exception as e:
             logging.error(f"An error occurred: {e}")
         finally:
