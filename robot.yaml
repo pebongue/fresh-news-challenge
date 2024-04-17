@@ -1,8 +1,37 @@
 # Meta information that will configure the execution of the necessary tasks
 
 tasks:
-  Browser Example:
-    shell: python -m robocorp.tasks run tasks.py
+  Website to Scrape:
+    shell: python -m robocorp.tasks run tasks.py -t retrieve_website_to_scrape
+    description: Retrieve the website to scrape
+
+  Navigate to Website:
+    shell: python -m robocorp.tasks run tasks.py -t navigate_to_website
+    description: Navigate to the website to scrape
+  
+  Enter Search Criteria:
+    shell: python -m robocorp.tasks run tasks.py -t enter_search_phrase
+    description: Enter the search criteria
+  
+  Select News Category:
+    shell: python -m robocorp.tasks run tasks.py -t select_news_category
+    description: Select the news category
+  
+  Choose Latest News:
+    shell: python -m robocorp.tasks run tasks.py -t choose_latest_news
+    description: Choose the latest news
+
+  Extract News Information:
+    shell: python -m robocorp.tasks run tasks.py -t extract_news_data
+    description: Extract the news information
+  
+  Save News Information:
+    shell: python -m robocorp.tasks run tasks.py -t store_data_in_excel
+    description: Save the news information
+
+  Download News Picture:
+    shell: python -m robocorp.tasks run tasks.py -t download_news_picture
+    description: Download the news information
 
 environmentConfigs:
   - environment_windows_amd64_freeze.yaml
