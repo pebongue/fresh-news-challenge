@@ -36,7 +36,7 @@ class NewsScraper:
         self.news_data = []
         self.logger = logging.getLogger(__name__)
 
-    @retry(stop_max_attempt_number=3, wait_fixed=2000)
+    @retry(stop=3, wait=2000)
     def navigate_to_site(self):
         try:
             self.browser.open_available_browser(self.base_url)
@@ -44,7 +44,7 @@ class NewsScraper:
             self.logger.error(f"Error navigating to site: {e}")
             raise
     
-    @retry(stop_max_attempt_number=3, wait_fixed=2000)
+    @retry(stop=3, wait=2000)
     def enter_search_phrase(self):
         try:
             search_field = self.browser.find_element(By.NAME, "q")
@@ -54,7 +54,7 @@ class NewsScraper:
             self.logger.error(f"Error entering search phrase: {e}")
             raise
 
-    @retry(stop_max_attempt_number=3, wait_fixed=2000)
+    @retry(stop=3, wait=2000)
     def select_news_category(self):
         try:
             self.browser.click_link("News")
@@ -62,7 +62,7 @@ class NewsScraper:
             self.logger.error(f"Error selecting news category: {e}")
             raise
     
-    @retry(stop_max_attempt_number=3, wait_fixed=2000)
+    @retry(stop=3, wait=2000)
     def choose_latest_news(self):
         try:
             self.browser.click_link("Latest")
@@ -74,7 +74,7 @@ class NewsScraper:
         if any(not var for var in [title, date, description, picture_url]):
             raise ValueError("Invalid data extracted")
 
-    @retry(stop_max_attempt_number=3, wait_fixed=2000)
+    @retry(stop=3, wait=2000)
     def extract_news_data(self):
         try:
             self.browser.wait_until_element_is_visible("css:div.NewsArticle__content")
@@ -98,7 +98,7 @@ class NewsScraper:
             self.logger.error(f"Error storing data in excel: {e}")
             raise
 
-    @retry(stop_max_attempt_number=3, wait_fixed=2000)
+    @retry(stop=3, wait=2000)
     def download_news_picture(self, news_data):
         try:
             response = requests.get(news_data.picture_url)
