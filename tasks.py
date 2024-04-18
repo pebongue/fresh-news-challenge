@@ -19,7 +19,7 @@ def clean_list(list_of_strings):
 def retrieve_website_to_scrape():
     websites = clean_list(storage.get_text('websites_to_scrape'))
     print(websites)
-    workitems.outputs.create(payload={"website": random.choice(websites)})
+    workitems.outputs.create(payload={"website": websites[random() * len(websites)]})
 
 @task
 def navigate_to_website():
