@@ -1,0 +1,10 @@
+[
+  {
+      "payload": {
+         "news_category": "Crypto"
+      },
+      "files": {
+          "orders.xlsx": "orders.xlsx"
+      }
+  }
+]
