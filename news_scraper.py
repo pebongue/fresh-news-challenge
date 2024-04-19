@@ -45,7 +45,7 @@ class NewsScraper:
         try:
             self.browser.set_download_directory(os.getcwd())
             self.browser.open_available_browser(self.base_url)
-            self.browser.wait_until_page_contains_element(self.INPUT_XPATH, timeout=5)
+            self.browser.wait_until_page_contains_element(self.INPUT_XPATH, timeout=300)
         except Exception as e:
             self.logger.error(f"Error navigating to site: {e}")
             raise
@@ -57,7 +57,7 @@ class NewsScraper:
         try:
             self.browser.input_text(self.INPUT_XPATH, self.search_phrase)
             self.browser.press_keys(self.INPUT_XPATH, Keys.ENTER)
-            self.browser.wait_until_page_contains_element(self.CONTENT_SELECTOR, timeout=120)
+            self.browser.wait_until_page_contains_element(self.CONTENT_SELECTOR, timeout=180)
         except Exception as e:
             self.logger.error(f"Error entering search phrase: {e}")
             raise
@@ -87,7 +87,7 @@ class NewsScraper:
     def extract_news_data(self):
         try:
             DATA_SELECTOR = "xpath=//article[contains(@class, 'IFHyqb DeXSAc')]"
-            self.browser.wait_until_element_is_visible(DATA_SELECTOR, timeout=60)
+            self.browser.wait_until_element_is_visible(DATA_SELECTOR, timeout=180)
             soup = BeautifulSoup(self.browser.get_source(), 'html.parser')
             news_elements = soup.find_all("article", class_="IFHyqb DeXSAc")
             total_count = len(news_elements)
