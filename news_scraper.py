@@ -44,7 +44,7 @@ class NewsScraper:
     def navigate_to_site(self):
         try:
             self.browser.set_download_directory(os.getcwd())
-            self.browser.open_available_browser(self.base_url, headless=False)
+            self.browser.open_available_browser(self.base_url, headless=True)
             # self.browser.wait_until_page_contains_element(self.INPUT_XPATH, timeout=300)
         except Exception as e:
             self.logger.error(f"Error navigating to site: {e}")
