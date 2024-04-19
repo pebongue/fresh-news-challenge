@@ -1,10 +1,10 @@
 from pathlib import Path
+from bs4 import BeautifulSoup
 import requests
 from robocorp import workitems
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
 from RPA.Browser.Selenium import Selenium
 import pandas as pd
 import logging
@@ -38,24 +38,26 @@ class NewsScraper:
         self.num_months = num_months
         self.logger = logging.getLogger(__name__)
 
-    INPUT_XPATH = "xpath=//input[@name='p']"
+    INPUT_XPATH = "xpath=//input[@class='Ax4B8 ZAGvjd']"
 
     @retry(stop=3, wait=2000)
     def navigate_to_site(self):
         try:
             self.browser.set_download_directory(os.getcwd())
             self.browser.open_available_browser(self.base_url)
-            self.browser.wait_until_page_contains_element(self.INPUT_XPATH, timeout=30)
+            self.browser.wait_until_page_contains_element(self.INPUT_XPATH, timeout=5)
         except Exception as e:
             self.logger.error(f"Error navigating to site: {e}")
             raise
     
+    CONTENT_SELECTOR = "xpath=//div[contains(@class, 'WeBXWd')]"
+
     @retry(stop=3, wait=2000)
     def enter_search_phrase(self):
         try:
-            self.browser.input_text("xpath=//input[@name='p']", self.search_phrase)
-            self.browser.press_keys("xpath=//input[@name='p']", "\\13")  # Press Enter key
-            self.browser.wait_until_page_contains_element("xpath=//div[contains(@class,'NewsArticle')]", timeout=30)
+            self.browser.input_text(self.INPUT_XPATH, self.search_phrase)
+            self.browser.press_keys(self.INPUT_XPATH, Keys.ENTER)
+            self.browser.wait_until_page_contains_element(self.CONTENT_SELECTOR, timeout=120)
         except Exception as e:
             self.logger.error(f"Error entering search phrase: {e}")
             raise
@@ -65,6 +67,7 @@ class NewsScraper:
         if self.news_category:
             try:
                 self.browser.click_link(self.news_category)
+                print(f"Selected news category: {self.news_category}")
             except Exception as e:
                 self.logger.error(f"Error selecting news category: {e}")
                 raise
@@ -72,7 +75,7 @@ class NewsScraper:
     @retry(stop=3, wait=2000)
     def choose_latest_news(self):
         try:
-            self.browser.click_link("Latest")
+            self.browser.click_element("xpath=//a[@aria-label='Israel']")
         except Exception as e:
             self.logger.error(f"Error choosing latest news: {e}")
             raise
@@ -84,15 +87,27 @@ class NewsScraper:
     @retry(stop=3, wait=2000)
     def extract_news_data(self):
         try:
-            self.browser.wait_until_element_is_visible("css:div.NewsArticle__content")
-            news_elements = self.browser.find_elements("css:div.NewsArticle__content")
-            for news in news_elements:
-                title = self.browser.find_element("css:h4", parent=news).text
-                date = self.browser.find_element("css:time", parent=news).get_attribute("datetime")
-                description = self.browser.find_element("css:p", parent=news).text
-                picture_url = self.browser.find_element("css:img", parent=news).get_attribute("src")
+            DATA_SELECTOR = "xpath=//article[contains(@class, 'IFHyqb DeXSAc')]"
+            self.browser.wait_until_element_is_visible(DATA_SELECTOR, timeout=60)
+            soup = BeautifulSoup(self.browser.get_source(), 'html.parser')
+            news_elements = soup.find_all("article", class_="IFHyqb DeXSAc")
+            total_count = len(news_elements)
+            self.logger.info(f"Total count of news elements: {total_count}")
+            for index, news in enumerate(news_elements):
+                title_element = news.find("a", class_="JtKRv")
+                title = title_element.get_text().strip() if title_element else "No title found"
+                date_element = news.find("time", class_="hvbAAd")
+                date = date_element.get("datetime")
+                author_element = news.find("span", class_="PJK1m")
+                author = author_element.get_text().strip() if author_element else "No author found"
+                source_element = news.find("div", class_="vr1PYe")
+                source = source_element.get_text().strip() if source_element else "No source found"
+                description = f"{author}, {source}"
+                picture_url = f"{self.base_url}{news.find('img', class_='Quavad')['src']}"
+                print(title, date, description, picture_url)
                 self.validate_data(title, date, description, picture_url)
                 self.news_data.append(NewsData(title, date, description, picture_url))
+                self.logger.info(f"Processed news item {index+1}/{total_count}")
         except Exception as e:
             self.logger.error(f"Error extracting news data: {e}")
             raise
@@ -110,7 +125,11 @@ class NewsScraper:
                     'contains_money': nd.contains_money()
                 })
             df = pd.DataFrame(data)
-            df.to_excel("news_data.xlsx", index=False)
+            output_folder = Path("output")
+            folder_path = Path(__file__).resolve().parent / output_folder
+            folder_path.mkdir(parents=True, exist_ok=True)
+            filename = folder_path / "news_data.xlsx"
+            df.to_excel(filename, index=False)
             self.logger.info("Data extracted and saved successfully.")
         except Exception as e:
             self.logger.error(f"Error storing data in excel: {e}")
@@ -121,7 +140,10 @@ class NewsScraper:
         try:
             response = requests.get(news_data.picture_url)
             if response.status_code == 200:
-                filename = Path(news_data.picture_url).name
+                output_folder = Path("output/pictures")
+                folder_path = Path(__file__).resolve().parent / output_folder
+                folder_path.mkdir(parents=True, exist_ok=True)
+                filename = folder_path / Path(news_data.picture_url).name
                 with open(filename, 'wb') as f:
                     f.write(response.content)
                 news_data.picture_filename = filename
@@ -147,7 +169,9 @@ class NewsScraper:
         except Exception as e:
             logging.error(f"An error occurred: {e}")
         finally:
+            self.logger.info("Closing all browsers.")
             self.browser.close_all_browsers()
+        self.logger.info("Process completed.")
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
@@ -161,5 +185,5 @@ if __name__ == "__main__":
         news_category = item.payload.get("news_category")
         num_months = int(item.payload.get("num_months", 0))
 
-        scraper = NewsScraper("https://news.yahoo.com", search_phrase, news_category, num_months)
+        scraper = NewsScraper("https://news.google.com", search_phrase, news_category, num_months)
         scraper.run()
