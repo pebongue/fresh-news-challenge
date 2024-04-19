@@ -1,5 +1,4 @@
 import random
-from robocorp import browser
 from robocorp.tasks import task
 from robocorp import storage
 from robocorp import workitems
@@ -27,31 +26,42 @@ def retrieve_website_to_scrape():
     print(websites)
     workitems.outputs.create(payload={"website": random.choice(websites)})
 
-@task
-def navigate_to_website():
     scraper.navigate_to_site()
-
-@task
-def enter_search_phrase():
     scraper.enter_search_phrase()
-
-@task
-def select_news_category():
     scraper.select_news_category()
-
-@task
-def choose_latest_news():
     scraper.choose_latest_news()
 
 @task
-def extract_news_data():
+def scrape_news_data():
     scraper.extract_news_data()
-
-@task
-def store_data_in_excel():
     scraper.store_data_in_excel()
+    scraper.download_all_news_pictures()
 
-@task
-def download_news_picture():
-    scraper.download_news_picture()
+# @task
+# def navigate_to_website():
+#     scraper.navigate_to_site()
+
+# @task
+# def enter_search_phrase():
+#     scraper.enter_search_phrase()
+
+# @task
+# def select_news_category():
+#     scraper.select_news_category()
+
+# @task
+# def choose_latest_news():
+#     scraper.choose_latest_news()
+
+# @task
+# def extract_news_data():
+#     scraper.extract_news_data()
+
+# @task
+# def store_data_in_excel():
+#     scraper.store_data_in_excel()
+
+# @task
+# def download_news_picture():
+#     scraper.download_news_picture() 
 
