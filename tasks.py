@@ -6,13 +6,6 @@ from robocorp import workitems
 import logging
 from news_scraper import NewsScraper
 
-# Access the current input work item
-item = workitems.inputs.current
-
-search_phrase = item.payload.get("search_phrase")
-news_category = item.payload.get("news_category")
-num_months = int(item.payload.get("num_months", 0))
-scraper = NewsScraper('https://news.google.com', search_phrase, news_category, num_months)
 
 def clean_list(list_of_strings):
     keyword_content_list = list_of_strings.strip().split("\n")
@@ -26,16 +19,27 @@ def retrieve_website_to_scrape():
     print(websites)
     workitems.outputs.create(payload={"website": random.choice(websites)})
 
-    scraper.navigate_to_site()
-    scraper.enter_search_phrase()
-    scraper.select_news_category()
-    scraper.choose_latest_news()
+    # Access the current input work item
+    item = workitems.inputs.current
+
+    search_phrase = item.payload.get("search_phrase")
+    news_category = item.payload.get("news_category")
+    num_months = int(item.payload.get("num_months", 0))
+    scraper = NewsScraper(item.payload.get("website"), search_phrase, news_category, num_months)
+
+    scraper.run()
+
+    # scraper.navigate_to_site()
+    # scraper.enter_search_phrase()
+    # scraper.select_news_category()
+    # scraper.choose_latest_news()
 
 @task
 def scrape_news_data():
-    scraper.extract_news_data()
-    scraper.store_data_in_excel()
-    scraper.download_all_news_pictures()
+    print("Scraping news data - All Complete")
+    # scraper.extract_news_data()
+    # scraper.store_data_in_excel()
+    # scraper.download_all_news_pictures()
 
 # @task
 # def navigate_to_website():
