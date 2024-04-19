@@ -67,7 +67,6 @@ class NewsScraper:
         if self.news_category:
             try:
                 self.browser.click_link(self.news_category)
-                print(f"Selected news category: {self.news_category}")
             except Exception as e:
                 self.logger.error(f"Error selecting news category: {e}")
                 raise
@@ -104,7 +103,6 @@ class NewsScraper:
                 source = source_element.get_text().strip() if source_element else "No source found"
                 description = f"{author}, {source}"
                 picture_url = f"{self.base_url}{news.find('img', class_='Quavad')['src']}"
-                print(title, date, description, picture_url)
                 self.validate_data(title, date, description, picture_url)
                 self.news_data.append(NewsData(title, date, description, picture_url))
                 self.logger.info(f"Processed news item {index+1}/{total_count}")
@@ -178,7 +176,6 @@ if __name__ == "__main__":
 
     # Access the current input work item
     item = workitems.inputs.current
-    print(item)
 
     if item is not None and item.payload is not None:
         search_phrase = item.payload.get("search_phrase")

@@ -13,7 +13,7 @@ item = workitems.inputs.current
 search_phrase = item.payload.get("search_phrase")
 news_category = item.payload.get("news_category")
 num_months = int(item.payload.get("num_months", 0))
-scraper = NewsScraper('https://news.yahoo.com', search_phrase, news_category, num_months)
+scraper = NewsScraper('https://news.google.com', search_phrase, news_category, num_months)
 
 def clean_list(list_of_strings):
     keyword_content_list = list_of_strings.strip().split("\n")
