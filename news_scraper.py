@@ -44,8 +44,8 @@ class NewsScraper:
     def navigate_to_site(self):
         try:
             self.browser.set_download_directory(os.getcwd())
-            self.browser.open_available_browser(self.base_url, headless=True)
-            self.browser.wait_until_page_contains_element(self.INPUT_XPATH, timeout=300)
+            self.browser.open_available_browser(self.base_url, headless=False)
+            # self.browser.wait_until_page_contains_element(self.INPUT_XPATH, timeout=300)
         except Exception as e:
             self.logger.error(f"Error navigating to site: {e}")
             raise
@@ -57,7 +57,7 @@ class NewsScraper:
         try:
             self.browser.input_text(self.INPUT_XPATH, self.search_phrase)
             self.browser.press_keys(self.INPUT_XPATH, Keys.ENTER)
-            self.browser.wait_until_page_contains_element(self.CONTENT_SELECTOR, timeout=180)
+            # self.browser.wait_until_page_contains_element(self.CONTENT_SELECTOR, timeout=180)
         except Exception as e:
             self.logger.error(f"Error entering search phrase: {e}")
             raise
@@ -74,6 +74,7 @@ class NewsScraper:
     @retry(stop=3, wait=2000)
     def choose_latest_news(self):
         try:
+            self.browser.wait_until_page_contains_element("xpath=//a[@aria-label='Israel']", timeout=180)
             self.browser.click_element("xpath=//a[@aria-label='Israel']")
         except Exception as e:
             self.logger.error(f"Error choosing latest news: {e}")
@@ -86,8 +87,8 @@ class NewsScraper:
     @retry(stop=3, wait=2000)
     def extract_news_data(self):
         try:
-            DATA_SELECTOR = "xpath=//article[contains(@class, 'IFHyqb DeXSAc')]"
-            self.browser.wait_until_element_is_visible(DATA_SELECTOR, timeout=180)
+            # DATA_SELECTOR = "xpath=//article[contains(@class, 'IFHyqb DeXSAc')]"
+            # self.browser.wait_until_element_is_visible(DATA_SELECTOR, timeout=180)
             soup = BeautifulSoup(self.browser.get_source(), 'html.parser')
             news_elements = soup.find_all("article", class_="IFHyqb DeXSAc")
             total_count = len(news_elements)
@@ -102,7 +103,7 @@ class NewsScraper:
                 source_element = news.find("div", class_="vr1PYe")
                 source = source_element.get_text().strip() if source_element else "No source found"
                 description = f"{author}, {source}"
-                picture_url = f"{self.base_url}{news.find('img', class_='Quavad')['src']}"
+                picture_url = f"{self.base_url}{news.find('img', class_='Quavad')['src'] if news.find('img', class_='Quavad') else ''}"
                 self.validate_data(title, date, description, picture_url)
                 self.news_data.append(NewsData(title, date, description, picture_url))
                 self.logger.info(f"Processed news item {index+1}/{total_count}")
